@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.DS_Store
+*.json
+.user.yml
+data/
+target/
+dbt_packages/
+dbt_internal_packages/
+logs/
