@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: citibike
+    description: "Raw Citi Bike trip data, loaded monthly from https://s3.amazonaws.com/tripdata/index.html into BigQuery."
+    database: citibike-analytics-510413
+    schema: raw_citibike
+    tables:
+      - name: trips
+        description: >
+          One row per trip. Files are published monthly by the month of ended_at,
+          so each monthly file maps to exactly one monthly partition.
+          started_at and ended_at contain New York local time (America/New_York), 
+          but they are stored as TIMESTAMP values labeled as UTC. Convert them to actual UTC in staging.
+        config:
+          loaded_at_field: _loaded_at
+          freshness:
+            warn_after: {count: 45, period: day}
+            error_after: {count: 75, period: day}

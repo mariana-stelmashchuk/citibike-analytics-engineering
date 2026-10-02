@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: stg_citibike__trips
+    description: "One row per trip. Cleaned and renamed rides from Citi Bike trips."
+
+    columns:
+      - name: ride_id
+        description: "Unique identifier of the trip"
+        data_type: string
+        data_tests:
+          - not_null
+          - unique
+
+      - name: rideable_type
+        description: "Type of bike used"
+        data_type: string
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['classic_bike', 'electric_bike']
+
+      - name: rider_type
+        description: "Type of rider"
+        data_type: string
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['member', 'casual']
+
+      - name: start_station_id
+        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock"
+        data_type: string
+        data_tests:
+          - not_null:
+              config:
+                where: "rideable_type = 'classic_bike'"
+
+      - name: start_station_name
+        description: "Name of the station where the trip started"
+        data_type: string
+
+      - name: end_station_id
+        description: "Identifier of the station where the trip ended"
+        data_type: string
+
+      - name: end_station_name
+        description: "Name of the station where the trip ended"
+        data_type: string
+
+      - name: start_lat
+        description: "Latitude of the trip start point"
+        data_type: float64
+
+      - name: start_lng
+        description: "Longitude of the trip start point"
+        data_type: float64
+
+      - name: end_lat
+        description: "Latitude of the trip end point"
+        data_type: float64
+
+      - name: end_lng
+        description: "Longitude of the trip end point"
+        data_type: float64
+
+      - name: started_at_local
+        description: "Trip start time in New York local time"
+        data_type: datetime
+        data_tests:
+          - not_null
+
+      - name: started_at
+        description: "Trip start time in UTC, converted from America/New_York local time"
+        data_type: timestamp
+        data_tests:
+          - not_null
+
+      - name: ended_at_local
+        description: "Trip end time in New York local time"
+        data_type: datetime
+        data_tests:
+          - not_null
+
+      - name: ended_at
+        description: "Trip end time in UTC, converted from America/New_York local time"
+        data_type: timestamp
+        data_tests:
+          - not_null
