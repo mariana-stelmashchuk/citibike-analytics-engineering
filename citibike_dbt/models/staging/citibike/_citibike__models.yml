@@ -9,26 +9,8 @@ models:
         description: "Unique identifier of the trip"
         data_type: string
         data_tests:
-          - not_null
           - unique
-
-      - name: rideable_type
-        description: "Type of bike used"
-        data_type: string
-        data_tests:
           - not_null
-          - accepted_values:
-              arguments:
-                values: ['classic_bike', 'electric_bike']
-
-      - name: rider_type
-        description: "Type of rider"
-        data_type: string
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['member', 'casual']
 
       - name: start_station_id
         description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock"
@@ -38,16 +20,34 @@ models:
               config:
                 where: "rideable_type = 'classic_bike'"
 
-      - name: start_station_name
-        description: "Name of the station where the trip started"
+      - name: end_station_id
+        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes"
         data_type: string
 
-      - name: end_station_id
-        description: "Identifier of the station where the trip ended"
+      - name: rideable_type
+        description: "Type of bike used: classic_bike or electric_bike"
+        data_type: string
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['classic_bike', 'electric_bike']
+
+      - name: rider_type
+        description: "Type of rider: member (subscriber) or casual"
+        data_type: string
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['member', 'casual']
+
+      - name: start_station_name
+        description: "Name of the station where the trip started, as recorded on the trip"
         data_type: string
 
       - name: end_station_name
-        description: "Name of the station where the trip ended"
+        description: "Name of the station where the trip ended, as recorded on the trip"
         data_type: string
 
       - name: start_lat
@@ -69,8 +69,6 @@ models:
       - name: started_at_local
         description: "Trip start time in New York local time"
         data_type: datetime
-        data_tests:
-          - not_null
 
       - name: started_at
         description: "Trip start time in UTC, converted from America/New_York local time"
@@ -81,11 +79,17 @@ models:
       - name: ended_at_local
         description: "Trip end time in New York local time"
         data_type: datetime
-        data_tests:
-          - not_null
 
       - name: ended_at
         description: "Trip end time in UTC, converted from America/New_York local time"
         data_type: timestamp
         data_tests:
           - not_null
+
+      - name: _source_file
+        description: "Name of the source CSV file the row was loaded from"
+        data_type: string
+
+      - name: _loaded_at
+        description: "Timestamp when the source file was converted to Parquet before loading"
+        data_type: timestamp
