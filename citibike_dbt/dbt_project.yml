@@ -33,3 +33,5 @@ models:
   citibike_dbt:
     staging:
       +materialized: view
+    intermediate:
+      +materialized: view

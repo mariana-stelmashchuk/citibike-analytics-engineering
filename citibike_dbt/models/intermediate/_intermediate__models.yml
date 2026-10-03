@@ -1,0 +1,101 @@
+version: 2
+
+models:
+  - name: int_trips__enriched
+    description: >
+      One row per trip. Enriches staged Citi Bike trips with duration, straight-line
+      distance, local date and hour, and trip flags.
+
+    columns:
+      - name: ride_id
+        description: "Unique identifier of the trip"
+        data_type: string
+
+      - name: start_station_id
+        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock"
+        data_type: string
+
+      - name: end_station_id
+        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes"
+        data_type: string
+
+      - name: rideable_type
+        description: "Type of bike used: classic_bike or electric_bike"
+        data_type: string
+
+      - name: rider_type
+        description: "Type of rider: member (subscriber) or casual"
+        data_type: string
+
+      - name: start_station_name
+        description: "Name of the station where the trip started, as recorded on the trip"
+        data_type: string
+
+      - name: end_station_name
+        description: "Name of the station where the trip ended, as recorded on the trip"
+        data_type: string
+
+      - name: start_lat
+        description: "Latitude of the trip start point"
+        data_type: float64
+
+      - name: start_lng
+        description: "Longitude of the trip start point"
+        data_type: float64
+
+      - name: end_lat
+        description: "Latitude of the trip end point"
+        data_type: float64
+
+      - name: end_lng
+        description: "Longitude of the trip end point"
+        data_type: float64
+
+      - name: duration_minutes
+        description: "Trip duration in minutes, computed from UTC timestamps so daylight saving changes do not distort it"
+        data_type: float64
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+      - name: distance_km
+        description: "Straight-line distance between start and end points in kilometers; null when end coordinates are missing"
+        data_type: float64
+
+      - name: has_end_station
+        description: "True when the trip ended at a known station"
+        data_type: boolean
+
+      - name: is_round_trip
+        description: "True when the trip started and ended at the same station"
+        data_type: boolean
+
+      - name: is_over_24h
+        description: "True when the trip lasted longer than 24 hours; likely an unreturned bike"
+        data_type: boolean
+
+      - name: started_date_local
+        description: "Trip start date in New York local time; join key to dim_date"
+        data_type: date
+
+      - name: started_hour_local
+        description: "Hour of trip start in New York local time (0-23)"
+        data_type: int64
+
+      - name: started_at_local
+        description: "Trip start time in New York local time"
+        data_type: datetime
+
+      - name: started_at
+        description: "Trip start time in UTC, converted from America/New_York local time"
+        data_type: timestamp
+
+      - name: ended_at_local
+        description: "Trip end time in New York local time"
+        data_type: datetime
+
+      - name: ended_at
+        description: "Trip end time in UTC, converted from America/New_York local time"
+        data_type: timestamp
