@@ -88,3 +88,94 @@ models:
       - name: week_start_date
         description: "First day of the ISO week (Monday)"
         data_type: date
+  
+  - name: fct_trips
+    description: >
+      One row per trip. Core trips fact table with duration, distance and trip flags.
+      Station names and coordinates live in dim_stations; dates join to dim_date
+      on started_date_local. Source files are published by the month a trip ended,
+      so trip counts for a month by start date are final only after the next
+      month's file is loaded.
+
+    columns:
+      - name: ride_id
+        description: "Unique identifier of the trip"
+        data_type: string
+        data_tests:
+          - unique
+          - not_null
+
+      - name: start_station_id
+        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock"
+        data_type: string
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_stations')
+                field: station_id
+
+      - name: end_station_id
+        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes"
+        data_type: string
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_stations')
+                field: station_id
+
+      - name: rideable_type
+        description: "Type of bike used: classic_bike or electric_bike"
+        data_type: string
+
+      - name: rider_type
+        description: "Type of rider: member (subscriber) or casual"
+        data_type: string
+
+      - name: duration_minutes
+        description: "Trip duration in minutes, computed from UTC timestamps so daylight saving changes do not distort it"
+        data_type: float64
+
+      - name: distance_km
+        description: "Straight-line distance between start and end points in kilometers; null when end coordinates are missing"
+        data_type: float64
+
+      - name: has_end_station
+        description: "True when the trip ended at a known station"
+        data_type: boolean
+
+      - name: is_round_trip
+        description: "True when the trip started and ended at the same station"
+        data_type: boolean
+
+      - name: is_over_24h
+        description: "True when the trip lasted longer than 24 hours; likely an unreturned bike"
+        data_type: boolean
+
+      - name: started_date_local
+        description: "Trip start date in New York local time; join key to dim_date"
+        data_type: date
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: started_hour_local
+        description: "Hour of trip start in New York local time (0-23)"
+        data_type: int64
+
+      - name: started_at_local
+        description: "Trip start time in New York local time"
+        data_type: datetime
+
+      - name: started_at
+        description: "Trip start time in UTC, converted from America/New_York local time"
+        data_type: timestamp
+
+      - name: ended_at_local
+        description: "Trip end time in New York local time"
+        data_type: datetime
+
+      - name: ended_at
+        description: "Trip end time in UTC, converted from America/New_York local time"
+        data_type: timestamp
