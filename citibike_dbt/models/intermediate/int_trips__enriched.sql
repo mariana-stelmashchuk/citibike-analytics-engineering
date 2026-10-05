@@ -64,6 +64,7 @@ final as (
 
         -- local time parts
         date(started_at_local) as started_date_local,
+        date(ended_at_local) as ended_date_local,
         extract(hour from started_at_local) as started_hour_local,
 
         -- timestamps

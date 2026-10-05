@@ -79,6 +79,10 @@ models:
       - name: started_date_local
         description: "Trip start date in New York local time; join key to dim_date"
         data_type: date
+      
+      - name: started_date_local
+        description: "Trip end date in New York local time; join key to dim_date"
+        data_type: date
 
       - name: started_hour_local
         description: "Hour of trip start in New York local time (0-23)"

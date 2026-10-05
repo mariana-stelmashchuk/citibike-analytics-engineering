@@ -179,3 +179,75 @@ models:
       - name: ended_at
         description: "Trip end time in UTC, converted from America/New_York local time"
         data_type: timestamp
+
+  - name: fct_station_daily
+    description: >
+      One row per station per local day with at least one departure or arrival.
+      Departures are counted by trip start date, arrivals by trip end date, both in
+      New York local time. Days without any activity are not included; use
+      dim_stations × dim_date to build a dense grid if needed. Trips without a
+      station on the respective side are excluded. Counts for the most recent
+      days may change after the next monthly file is loaded.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - station_id
+              - date_day
+
+    columns:
+      - name: station_id
+        description: "Identifier of the station"
+        data_type: string
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_stations')
+                field: station_id
+
+      - name: date_day
+        description: "Calendar date in New York local time; join key to dim_date"
+        data_type: date
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+      - name: departures_cnt
+        description: "Number of trips that started at the station on this day"
+        data_type: int64
+
+      - name: member_departures_cnt
+        description: "Number of trips by members (subscribers) that started at the station on this day"
+        data_type: int64
+
+      - name: casual_departures_cnt
+        description: "Number of trips by casual riders that started at the station on this day"
+        data_type: int64
+
+      - name: electric_departures_cnt
+        description: "Number of e-bike trips that started at the station on this day"
+        data_type: int64
+
+      - name: arrivals_cnt
+        description: "Number of trips that ended at the station on this day"
+        data_type: int64
+
+      - name: member_arrivals_cnt
+        description: "Number of trips by members (subscribers) that ended at the station on this day"
+        data_type: int64
+
+      - name: casual_arrivals_cnt
+        description: "Number of trips by casual riders that ended at the station on this day"
+        data_type: int64
+
+      - name: electric_arrivals_cnt
+        description: "Number of e-bike trips that ended at the station on this day; e-bikes need charging where they end"
+        data_type: int64
+
+      - name: net_flow
+        description: "arrivals_cnt minus departures_cnt; positive means the station accumulated bikes, negative means it lost bikes"
+        data_type: int64
