@@ -8,10 +8,16 @@ sources:
     tables:
       - name: trips
         description: >
-          One row per trip. Files are published monthly by the month of ended_at,
-          so each monthly file maps to exactly one monthly partition.
-          started_at and ended_at contain New York local time (America/New_York), 
-          but they are stored as TIMESTAMP values labeled as UTC. Convert them to actual UTC in staging.
+          One row per trip as published in Citi Bike monthly files, partitioned by
+          _batch_month (the month of the source file). Known source issues:
+          (1) files are normally cut by the month a trip ended, but the April 2026 file
+          was cut by start date, so 512 trips appear in both the April and May 2026 files
+          and trips that started on 2026-03-31 and ended on 2026-04-01 are missing from
+          the source entirely;
+          (2) some station ids lost a trailing zero (e.g. 5785.1 instead of 5785.10);
+          (3) started_at and ended_at hold New York local wall-clock time but are stored
+          as TIMESTAMP labeled UTC.
+          Issues (1) and (2) are handled in stg_citibike__trips; (3) is converted there.
         config:
           loaded_at_field: _loaded_at
           freshness:

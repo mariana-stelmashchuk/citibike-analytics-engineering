@@ -2,7 +2,10 @@ version: 2
 
 models:
   - name: stg_citibike__trips
-    description: "One row per trip. Cleaned and renamed rides from Citi Bike trips."
+    description: >
+      One row per trip. Deduplicated across source files (the copy from the most
+      recent file is kept), station ids that lost a trailing zero are repaired,
+      and timestamps are converted from New York local wall-clock time to proper UTC.
 
     columns:
       - name: ride_id
@@ -13,7 +16,7 @@ models:
           - not_null
 
       - name: start_station_id
-        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock"
+        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
         data_type: string
         data_tests:
           - not_null:
@@ -21,7 +24,7 @@ models:
                 where: "rideable_type = 'classic_bike'"
 
       - name: end_station_id
-        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes"
+        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
         data_type: string
 
       - name: rideable_type
@@ -81,14 +84,22 @@ models:
         data_type: datetime
 
       - name: ended_at
-        description: "Trip end time in UTC, converted from America/New_York local time"
+        description: "Trip end time in UTC, converted from America/New_York local time. On the day DST ends, trips that start in the first repeated hour and end in the second one are shifted by one hour (see is_dst_adjusted)"
         data_type: timestamp
         data_tests:
           - not_null
+        
+      - name: is_dst_adjusted
+        description: "True when ended_at was shifted by one hour because the trip crossed the repeated hour at the end of DST and otherwise had a negative duration. Trips that crossed that hour without a negative duration cannot be detected and may be off by up to one hour"
+        data_type: boolean
 
       - name: _source_file
         description: "Name of the source CSV file the row was loaded from"
         data_type: string
+      
+      - name: _batch_month
+        description: "Month of the source file the row was loaded from"
+        data_type: date
 
       - name: _loaded_at
         description: "Timestamp when the source file was converted to Parquet before loading"
