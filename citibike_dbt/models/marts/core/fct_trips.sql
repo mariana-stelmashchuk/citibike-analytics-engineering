@@ -16,6 +16,7 @@ select
     has_end_station,
     is_round_trip,
     is_over_24h,
+    is_dst_adjusted,
 
     -- local time parts
     started_date_local,

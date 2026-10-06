@@ -15,7 +15,8 @@ with trips as (
         started_at_local,
         started_at,
         ended_at_local,
-        ended_at
+        ended_at,
+        is_dst_adjusted
     from {{ ref('stg_citibike__trips') }}
 
 ),
@@ -61,6 +62,7 @@ final as (
         end_station_id is not null as has_end_station,
         coalesce(start_station_id = end_station_id, false) as is_round_trip,
         duration_minutes > 1440 as is_over_24h,
+        is_dst_adjusted,
 
         -- local time parts
         date(started_at_local) as started_date_local,

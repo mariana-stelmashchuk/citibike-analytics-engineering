@@ -12,11 +12,11 @@ models:
         data_type: string
 
       - name: start_station_id
-        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock"
+        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
         data_type: string
 
       - name: end_station_id
-        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes"
+        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
         data_type: string
 
       - name: rideable_type
@@ -76,6 +76,10 @@ models:
         description: "True when the trip lasted longer than 24 hours; likely an unreturned bike"
         data_type: boolean
 
+      - name: is_dst_adjusted
+        description: "True when ended_at was shifted by one hour because the trip crossed the repeated hour at the end of DST and otherwise had a negative duration. Trips that crossed that hour without a negative duration cannot be detected and may be off by up to one hour"
+        data_type: boolean
+
       - name: started_date_local
         description: "Trip start date in New York local time; join key to dim_date"
         data_type: date
@@ -101,5 +105,5 @@ models:
         data_type: datetime
 
       - name: ended_at
-        description: "Trip end time in UTC, converted from America/New_York local time"
+        description: "Trip end time in UTC, converted from America/New_York local time. On the day DST ends, trips that start in the first repeated hour and end in the second one are shifted by one hour (see is_dst_adjusted)"
         data_type: timestamp

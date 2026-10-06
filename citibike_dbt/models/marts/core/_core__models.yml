@@ -150,6 +150,10 @@ models:
       - name: is_over_24h
         description: "True when the trip lasted longer than 24 hours; likely an unreturned bike"
         data_type: boolean
+      
+      - name: is_dst_adjusted
+        description: "True when ended_at was shifted by one hour because the trip crossed the repeated hour at the end of DST and otherwise had a negative duration. Trips that crossed that hour without a negative duration cannot be detected and may be off by up to one hour"
+        data_type: boolean
 
       - name: started_date_local
         description: "Trip start date in New York local time; join key to dim_date"
@@ -177,7 +181,7 @@ models:
         data_type: datetime
 
       - name: ended_at
-        description: "Trip end time in UTC, converted from America/New_York local time"
+        description: "Trip end time in UTC, converted from America/New_York local time. On the day DST ends, trips that start in the first repeated hour and end in the second one are shifted by one hour (see is_dst_adjusted)"
         data_type: timestamp
 
   - name: fct_station_daily
