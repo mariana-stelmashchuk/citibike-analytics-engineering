@@ -203,3 +203,45 @@ models:
       - name: _batch_month
         description: "Month of the source file the kept copy of the trip was loaded from (the most recent file it appeared in)"
         data_type: date
+
+  - name: int_stations__current
+    description: "One row per station from the most recent GBFS snapshot. Input for the snp_stations snapshot."
+    columns:
+      - name: station_id
+        description: "Station id used in trips (GBFS short_name)"
+        data_type: string
+        data_tests:
+          - unique
+          - not_null
+
+      - name: gbfs_station_id
+        description: "Lyft's internal station id (GBFS station_id)"
+        data_type: string
+
+      - name: station_name
+        description: "Station name"
+        data_type: string
+
+      - name: region_id
+        description: "GBFS region id (e.g. New York City, Jersey City)"
+        data_type: string
+
+      - name: capacity
+        description: "Number of docks; 0 means the station is currently removed (not installed)"
+        data_type: int64
+
+      - name: is_charging
+        description: "True if the station charges e-bikes"
+        data_type: boolean
+
+      - name: station_lat
+        description: "Latitude of the station"
+        data_type: float64
+
+      - name: station_lng
+        description: "Longitude of the station"
+        data_type: float64
+
+      - name: _snapshot_date
+        description: "Date (UTC) of the most recent snapshot the row was taken from"
+        data_type: date

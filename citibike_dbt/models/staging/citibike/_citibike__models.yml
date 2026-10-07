@@ -109,3 +109,66 @@ models:
       - name: _loaded_at
         description: "Timestamp when the source file was converted to Parquet before loading"
         data_type: timestamp
+
+  - name: stg_citibike__station_information
+    description: "One row per station per snapshot date. Renamed GBFS station information; station_id is the id used in trips."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - station_id
+              - _snapshot_date
+
+    columns:
+      - name: station_id
+        description: "Station id used in trips (GBFS short_name)"
+        data_type: string
+        data_tests:
+          - not_null
+
+      - name: gbfs_station_id
+        description: "Lyft's internal station id (GBFS station_id)"
+        data_type: string
+        data_tests:
+          - not_null
+
+      - name: station_name
+        description: "Station name"
+        data_type: string
+
+      - name: region_id
+        description: "GBFS region id (e.g. New York City, Jersey City)"
+        data_type: string
+
+      - name: capacity
+        description: "Number of docks; 0 means the station is currently removed (not installed)"
+        data_type: int64
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+
+      - name: is_charging
+        description: "True if the station charges e-bikes"
+        data_type: boolean
+
+      - name: station_lat
+        description: "Latitude of the station"
+        data_type: float64
+
+      - name: station_lng
+        description: "Longitude of the station"
+        data_type: float64
+
+      - name: _feed_last_updated
+        description: "Time the GBFS feed was last updated by Citi Bike when the snapshot was taken"
+        data_type: timestamp
+
+      - name: _snapshot_date
+        description: "Date (UTC) the snapshot was taken"
+        data_type: date
+
+      - name: _loaded_at
+        description: "Time the snapshot was converted to Parquet before loading"
+        data_type: timestamp

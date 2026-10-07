@@ -1,0 +1,19 @@
+snapshots:
+  - name: snp_stations
+    relation: ref('int_stations__current')
+    description: >
+      SCD Type 2 history of Citi Bike stations from daily GBFS snapshots. A new version
+      is recorded when any tracked attribute changes. History starts from the first
+      snapshot (2026-10-07); earlier changes are not known.
+    config:
+      unique_key: station_id
+      strategy: check
+      check_cols:
+        - station_name
+        - region_id
+        - capacity
+        - is_charging
+        - station_lat
+        - station_lng
+      hard_deletes: invalidate
+      dbt_valid_to_current: "cast('9999-12-31' as timestamp)"

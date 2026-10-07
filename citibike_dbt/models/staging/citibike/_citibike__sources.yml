@@ -23,3 +23,15 @@ sources:
           freshness:
             warn_after: {count: 45, period: day}
             error_after: {count: 75, period: day}
+
+      - name: station_information
+        description: >
+          Daily snapshots of the GBFS station_information feed: one row per station per
+          snapshot date, partitioned by _snapshot_date. short_name matches the station ids
+          used in trips; station_id is Lyft's internal id. Capacity 0 means the station is
+          currently removed (not installed); some removed stations keep their old capacity.
+        config:
+          loaded_at_field: _loaded_at
+          freshness:
+            warn_after: {count: 2, period: day}
+            error_after: {count: 4, period: day}
