@@ -3,20 +3,20 @@ version: 2
 models:
   - name: stg_citibike__trips
     description: >
-      One row per trip. Deduplicated across source files (the copy from the most
-      recent file is kept), station ids that lost a trailing zero are repaired,
-      and timestamps are converted from New York local wall-clock time to proper UTC.
+      One row per row in the source files. Renamed Citi Bike trips with timestamps
+      converted from New York local wall-clock time to proper UTC. Not deduplicated:
+      a trip can appear in two monthly files; see int_trips__deduplicated.
 
     columns:
+      # ids
       - name: ride_id
-        description: "Unique identifier of the trip"
+        description: "Identifier of the trip; not unique here, as a trip can appear in two source files"
         data_type: string
         data_tests:
-          - unique
           - not_null
 
       - name: start_station_id
-        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
+        description: "Identifier of the station where the trip started, as published; null for some e-bike trips that started outside a dock. Some ids lost a trailing zero in the source (5785.1 instead of 5785.10); repaired in int_trips__deduplicated"
         data_type: string
         data_tests:
           - not_null:
@@ -24,9 +24,10 @@ models:
                 where: "rideable_type = 'classic_bike'"
 
       - name: end_station_id
-        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
+        description: "Identifier of the station where the trip ended, as published; null for e-bikes left outside a dock and for unreturned bikes. Some ids lost a trailing zero in the source (5785.1 instead of 5785.10); repaired in int_trips__deduplicated"
         data_type: string
 
+      # attributes
       - name: rideable_type
         description: "Type of bike used: classic_bike or electric_bike"
         data_type: string
@@ -53,6 +54,7 @@ models:
         description: "Name of the station where the trip ended, as recorded on the trip"
         data_type: string
 
+      # coordinates
       - name: start_lat
         description: "Latitude of the trip start point"
         data_type: float64
@@ -69,6 +71,7 @@ models:
         description: "Longitude of the trip end point"
         data_type: float64
 
+      # timestamps
       - name: started_at_local
         description: "Trip start time in New York local time"
         data_type: datetime
@@ -88,15 +91,17 @@ models:
         data_type: timestamp
         data_tests:
           - not_null
-        
+
+      # flags
       - name: is_dst_adjusted
         description: "True when ended_at was shifted by one hour because the trip crossed the repeated hour at the end of DST and otherwise had a negative duration. Trips that crossed that hour without a negative duration cannot be detected and may be off by up to one hour"
         data_type: boolean
 
+      # metadata
       - name: _source_file
         description: "Name of the source CSV file the row was loaded from"
         data_type: string
-      
+
       - name: _batch_month
         description: "Month of the source file the row was loaded from"
         data_type: date

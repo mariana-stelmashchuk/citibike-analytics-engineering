@@ -17,7 +17,7 @@ sources:
           (2) some station ids lost a trailing zero (e.g. 5785.1 instead of 5785.10);
           (3) started_at and ended_at hold New York local wall-clock time but are stored
           as TIMESTAMP labeled UTC.
-          Issues (1) and (2) are handled in stg_citibike__trips; (3) is converted there.
+          Issue (3) is converted in stg_citibike__trips; issues (1) and (2) are handled in int_trips__deduplicated.
         config:
           loaded_at_field: _loaded_at
           freshness:

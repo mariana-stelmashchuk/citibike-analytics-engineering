@@ -11,7 +11,7 @@ with trips as (
         end_lng,
         started_at,
         ended_at
-    from {{ ref('stg_citibike__trips') }}
+    from {{ ref('int_trips__deduplicated') }}
 
 ),
 

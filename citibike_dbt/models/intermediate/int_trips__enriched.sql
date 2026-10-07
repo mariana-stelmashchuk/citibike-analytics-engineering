@@ -17,7 +17,7 @@ with trips as (
         ended_at_local,
         ended_at,
         is_dst_adjusted
-    from {{ ref('stg_citibike__trips') }}
+    from {{ ref('int_trips__deduplicated') }}
 
 ),
 

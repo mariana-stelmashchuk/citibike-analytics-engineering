@@ -1,6 +1,98 @@
 version: 2
 
 models:
+
+  - name: int_trips__deduplicated
+    description: >
+      One row per trip. Deduplicates trips that appear in two adjacent source files
+      (the copy from the most recent file is kept) and repairs station ids that lost a
+      trailing zero. Incremental with insert_overwrite on _batch_month: each run
+      reprocesses the latest stored batch month together with any newer ones and
+      rewrites all of their partitions, so duplicates between adjacent files are
+      resolved. Assumes duplicates only occur between adjacent months, as observed in
+      the data. Reloading an older month in the raw table requires a --full-refresh.
+
+    columns:
+      - name: ride_id
+        description: "Unique identifier of the trip"
+        data_type: string
+        data_tests:
+          - unique
+          - not_null
+
+      - name: start_station_id
+        description: "Identifier of the station where the trip started; null for some e-bike trips that started outside a dock. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
+        data_type: string
+
+      - name: end_station_id
+        description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
+        data_type: string
+
+      - name: rideable_type
+        description: "Type of bike used: classic_bike or electric_bike"
+        data_type: string
+
+      - name: rider_type
+        description: "Type of rider: member (subscriber) or casual"
+        data_type: string
+
+      - name: start_station_name
+        description: "Name of the station where the trip started, as recorded on the trip"
+        data_type: string
+
+      - name: end_station_name
+        description: "Name of the station where the trip ended, as recorded on the trip"
+        data_type: string
+
+      - name: start_lat
+        description: "Latitude of the trip start point"
+        data_type: float64
+
+      - name: start_lng
+        description: "Longitude of the trip start point"
+        data_type: float64
+
+      - name: end_lat
+        description: "Latitude of the trip end point"
+        data_type: float64
+
+      - name: end_lng
+        description: "Longitude of the trip end point"
+        data_type: float64
+
+      - name: started_at_local
+        description: "Trip start time in New York local time"
+        data_type: datetime
+
+      - name: started_at
+        description: "Trip start time in UTC, converted from America/New_York local time"
+        data_type: timestamp
+
+      - name: ended_at_local
+        description: "Trip end time in New York local time"
+        data_type: datetime
+
+      - name: ended_at
+        description: "Trip end time in UTC, converted from America/New_York local time. On the day DST ends, trips that start in the first repeated hour and end in the second one are shifted by one hour (see is_dst_adjusted)"
+        data_type: timestamp
+
+      - name: is_dst_adjusted
+        description: "True when ended_at was shifted by one hour because the trip crossed the repeated hour at the end of DST and otherwise had a negative duration. Trips that crossed that hour without a negative duration cannot be detected and may be off by up to one hour"
+        data_type: boolean
+
+      - name: _source_file
+        description: "Name of the source CSV file the kept copy of the trip was loaded from (the most recent file it appeared in)"
+        data_type: string
+
+      - name: _batch_month
+        description: "Month of the source file the kept copy of the trip was loaded from (the most recent file it appeared in)"
+        data_type: date
+
+      - name: _loaded_at
+        description: "Timestamp when the source file was converted to Parquet before loading"
+        data_type: timestamp
+
+        
   - name: int_trips__enriched
     description: >
       One row per trip. Enriches staged Citi Bike trips with duration, straight-line
