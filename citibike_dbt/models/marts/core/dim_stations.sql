@@ -1,58 +1,44 @@
-with trips as (
+with gbfs_stations as (
 
-    select
-        start_station_id,
-        end_station_id,
-        start_station_name,
-        end_station_name,
-        start_lat,
-        start_lng,
-        end_lat,
-        end_lng,
-        started_at,
-        ended_at
-    from {{ ref('int_trips__deduplicated') }}
+    select *
+    from {{ ref('int_stations__current') }}
 
 ),
 
-station_events as (
+trip_stations as (
 
-    select
-        start_station_id as station_id,
-        start_station_name as station_name,
-        start_lat as station_lat,
-        start_lng as station_lng,
-        started_at as event_at
-    from trips
-    where start_station_id is not null
-
-    union all
-
-    select
-        end_station_id as station_id,
-        end_station_name as station_name,
-        end_lat as station_lat,
-        end_lng as station_lng,
-        ended_at as event_at
-    from trips
-    where end_station_id is not null
+    select *
+    from {{ ref('int_stations__from_trips') }}
 
 ),
 
 final as (
 
     select
-        station_id,
-        station_name,
-        station_lat,
-        station_lng,
-        min(event_at) over (partition by station_id) as first_trip_at,
-        max(event_at) over (partition by station_id) as last_trip_at
-    from station_events
-    qualify row_number() over (
-        partition by station_id
-        order by event_at desc, station_name
-    ) = 1
+        -- ids
+        coalesce(gbfs_stations.station_id, trip_stations.station_id) as station_id,
+        gbfs_stations.gbfs_station_id,
+
+        -- attributes
+        coalesce(gbfs_stations.station_name, trip_stations.station_name) as station_name,
+        gbfs_stations.region_id,
+        gbfs_stations.capacity,
+        gbfs_stations.is_charging,
+
+        -- coordinates
+        coalesce(gbfs_stations.station_lat, trip_stations.station_lat) as station_lat,
+        coalesce(gbfs_stations.station_lng, trip_stations.station_lng) as station_lng,
+
+        -- flags
+        gbfs_stations.station_id is not null as is_in_gbfs,
+
+        -- timestamps
+        trip_stations.first_trip_at,
+        trip_stations.last_trip_at
+
+    from gbfs_stations
+    full outer join trip_stations
+        on gbfs_stations.station_id = trip_stations.station_id
 
 )
 

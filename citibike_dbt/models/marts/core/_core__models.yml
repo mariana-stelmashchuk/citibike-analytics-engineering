@@ -3,22 +3,39 @@ version: 2
 models:
   - name: dim_stations
     description: >
-      One row per station, derived from trip data. Station name and coordinates
-      are taken from the most recent trip event (start or end) at the station.
+      One row per station with its current attributes. Combines the latest GBFS snapshot
+      (official name, coordinates, capacity) with stations seen only in trips (closed
+      before GBFS loading started). For point-in-time attributes use dim_stations_history.
 
     columns:
       - name: station_id
-        description: "Unique identifier of the station"
+        description: "Station id used in trips"
         data_type: string
         data_tests:
           - unique
           - not_null
 
+      - name: gbfs_station_id
+        description: "Lyft's internal station id; null for stations not in GBFS"
+        data_type: string
+
       - name: station_name
-        description: "Station name as of the most recent trip event at this station"
+        description: "Current station name from GBFS, or from the latest trip for stations not in GBFS"
         data_type: string
         data_tests:
           - not_null
+
+      - name: region_id
+        description: "GBFS region id; null for stations not in GBFS"
+        data_type: string
+
+      - name: capacity
+        description: "Number of docks; 0 means the station is currently removed; null for stations not in GBFS"
+        data_type: int64
+
+      - name: is_charging
+        description: "True if the station charges e-bikes; null for stations not in GBFS"
+        data_type: boolean
 
       - name: station_lat
         description: "Latitude of the station"
@@ -28,13 +45,95 @@ models:
         description: "Longitude of the station"
         data_type: float64
 
+      - name: is_in_gbfs
+        description: "True if the station is in the latest GBFS snapshot; false for stations seen only in trips"
+        data_type: boolean
+
       - name: first_trip_at
-        description: "Earliest trip event (start or end) at the station within the loaded data window, in UTC; not the station opening date"
+        description: "Earliest trip event (start or end) at the station within the loaded data window, in UTC; not the station opening date; null if no trips"
         data_type: timestamp
 
       - name: last_trip_at
-        description: "Latest trip event (start or end) at the station within the loaded data window, in UTC"
+        description: "Latest trip event (start or end) at the station within the loaded data window, in UTC; null if no trips"
         data_type: timestamp
+
+  - name: dim_stations_history
+    description: >
+      SCD Type 2: one row per version of a station. Versions come from the snp_stations
+      snapshot of daily GBFS loads. The first known version of each station is treated as
+      valid from 1900-01-01, because history before the first GBFS snapshot is unknown.
+      Stations seen only in trips get a single version valid for all time. Join to trips
+      with started_at >= valid_from and started_at < valid_to.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - station_id
+              - valid_from
+      - dbt_utils.mutually_exclusive_ranges:
+          arguments:
+            lower_bound_column: valid_from
+            upper_bound_column: valid_to
+            partition_by: station_id
+            gaps: allowed
+
+    columns:
+      - name: station_version_key
+        description: "Surrogate key of the station version (station_id + valid_from)"
+        data_type: string
+        data_tests:
+          - unique
+          - not_null
+
+      - name: station_id
+        description: "Station id used in trips"
+        data_type: string
+        data_tests:
+          - not_null
+
+      - name: gbfs_station_id
+        description: "Lyft's internal station id; null for stations not in GBFS"
+        data_type: string
+
+      - name: station_name
+        description: "Station name in this version"
+        data_type: string
+
+      - name: region_id
+        description: "GBFS region id in this version"
+        data_type: string
+
+      - name: capacity
+        description: "Number of docks in this version; 0 means the station was removed"
+        data_type: int64
+
+      - name: is_charging
+        description: "True if the station charged e-bikes in this version"
+        data_type: boolean
+
+      - name: station_lat
+        description: "Latitude of the station in this version"
+        data_type: float64
+
+      - name: station_lng
+        description: "Longitude of the station in this version"
+        data_type: float64
+
+      - name: valid_from
+        description: "Start of the version validity (inclusive), UTC; 1900-01-01 for the first known version"
+        data_type: timestamp
+
+      - name: valid_to
+        description: "End of the version validity (exclusive), UTC; 9999-12-31 for the current version"
+        data_type: timestamp
+
+      - name: is_in_gbfs
+        description: "True if the version comes from GBFS; false for stations seen only in trips"
+        data_type: boolean
+
+      - name: is_current
+        description: "True for the version valid now"
+        data_type: boolean
 
   - name: dim_date
     description: >

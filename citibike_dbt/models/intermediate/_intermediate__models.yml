@@ -245,3 +245,36 @@ models:
       - name: _snapshot_date
         description: "Date (UTC) of the most recent snapshot the row was taken from"
         data_type: date
+
+  - name: int_stations__from_trips
+    description: >
+      One row per station seen in trips, derived from trip data. Station name and
+      coordinates are taken from the most recent trip event (start or end) at the
+      station. Used to fill in stations missing from GBFS.
+    columns:
+      - name: station_id
+        description: "Station id used in trips"
+        data_type: string
+        data_tests:
+          - unique
+          - not_null
+
+      - name: station_name
+        description: "Station name as of the most recent trip event at this station"
+        data_type: string
+
+      - name: station_lat
+        description: "Latitude of the station"
+        data_type: float64
+
+      - name: station_lng
+        description: "Longitude of the station"
+        data_type: float64
+
+      - name: first_trip_at
+        description: "Earliest trip event (start or end) at the station within the loaded data window, in UTC; not the station opening date"
+        data_type: timestamp
+
+      - name: last_trip_at
+        description: "Latest trip event (start or end) at the station within the loaded data window, in UTC"
+        data_type: timestamp
