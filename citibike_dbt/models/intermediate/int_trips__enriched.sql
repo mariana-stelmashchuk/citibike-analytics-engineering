@@ -16,6 +16,7 @@ with trips as (
         started_at,
         ended_at_local,
         ended_at,
+        _batch_month,
         is_dst_adjusted
     from {{ ref('int_trips__deduplicated') }}
 
@@ -73,7 +74,8 @@ final as (
         started_at_local,
         started_at,
         ended_at_local,
-        ended_at
+        ended_at,
+        _batch_month
 
     from calculated
 

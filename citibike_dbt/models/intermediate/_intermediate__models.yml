@@ -199,3 +199,7 @@ models:
       - name: ended_at
         description: "Trip end time in UTC, converted from America/New_York local time. On the day DST ends, trips that start in the first repeated hour and end in the second one are shifted by one hour (see is_dst_adjusted)"
         data_type: timestamp
+      
+      - name: _batch_month
+        description: "Month of the source file the kept copy of the trip was loaded from (the most recent file it appeared in)"
+        data_type: date

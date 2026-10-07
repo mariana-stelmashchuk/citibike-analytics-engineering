@@ -95,7 +95,9 @@ models:
       Station names and coordinates live in dim_stations; dates join to dim_date
       on started_date_local. Source files are published by the month a trip ended,
       so trip counts for a month by start date are final only after the next
-      month's file is loaded.
+      month's file is loaded. Incremental with insert_overwrite, partitioned by
+      _batch_month (the source file month) and clustered by started_date_local:
+      filter on started_date_local for analysis, clustering limits the data scanned.
 
     columns:
       - name: ride_id
@@ -183,6 +185,10 @@ models:
       - name: ended_at
         description: "Trip end time in UTC, converted from America/New_York local time. On the day DST ends, trips that start in the first repeated hour and end in the second one are shifted by one hour (see is_dst_adjusted)"
         data_type: timestamp
+
+      - name: _batch_month
+        description: "Month of the source file the trip was loaded from; partition key of this table"
+        data_type: date
 
   - name: fct_station_daily
     description: >
