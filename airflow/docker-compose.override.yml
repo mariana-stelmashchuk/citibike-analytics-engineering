@@ -1,0 +1,9 @@
+services:
+  scheduler:
+    volumes:
+      - /Users/mrnstlm/projects/citibike-analytics-engineering/citibike_dbt:/usr/local/airflow/dbt/citibike_dbt
+      - /Users/mrnstlm/.gcp:/usr/local/airflow/gcp:ro
+  dag-processor:
+    volumes:
+      - /Users/mrnstlm/projects/citibike-analytics-engineering/citibike_dbt:/usr/local/airflow/dbt/citibike_dbt
+      - /Users/mrnstlm/.gcp:/usr/local/airflow/gcp:ro

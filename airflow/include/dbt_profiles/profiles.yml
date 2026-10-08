@@ -1,0 +1,13 @@
+citibike_dbt:
+  target: prod
+  outputs:
+    prod:
+      type: bigquery
+      method: service-account
+      keyfile: /usr/local/airflow/gcp/citibike-airflow-key.json
+      project: citibike-analytics-510413
+      dataset: dbt_prod
+      location: EU
+      threads: 4
+      job_execution_timeout_seconds: 300
+      maximum_bytes_billed: 10000000000
