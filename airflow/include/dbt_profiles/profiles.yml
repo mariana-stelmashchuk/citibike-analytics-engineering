@@ -10,4 +10,4 @@ citibike_dbt:
       location: EU
       threads: 4
       job_execution_timeout_seconds: 300
-      maximum_bytes_billed: 10000000000
+      maximum_bytes_billed: 30000000000
