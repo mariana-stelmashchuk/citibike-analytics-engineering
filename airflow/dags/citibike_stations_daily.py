@@ -3,26 +3,16 @@
 from datetime import datetime, timedelta
 
 from airflow.sdk import dag, task
-from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
+from cosmos import DbtTaskGroup, RenderConfig
 from cosmos.constants import InvocationMode
 
+from include.citibike.dbt_config import (
+    DBT_EXECUTABLE_PATH,
+    execution_config,
+    profile_config,
+    project_config,
+)
 from include.citibike.stations import load_station_snapshot
-
-DBT_PROJECT_PATH = "/usr/local/airflow/dbt/citibike_dbt"
-DBT_EXECUTABLE_PATH = "/usr/local/airflow/dbt_venv/bin/dbt"
-
-profile_config = ProfileConfig(
-    profile_name="citibike_dbt",
-    target_name="prod",
-    profiles_yml_filepath="/usr/local/airflow/include/dbt_profiles/profiles.yml",
-)
-
-# Run dbt as a separate program from its own virtualenv, not as a library inside Airflow,
-# so dbt and Airflow dependencies cannot conflict.
-execution_config = ExecutionConfig(
-    dbt_executable_path=DBT_EXECUTABLE_PATH,
-    invocation_mode=InvocationMode.SUBPROCESS,
-)
 
 
 @dag(
@@ -41,7 +31,7 @@ def citibike_stations_daily():
 
     dbt_stations = DbtTaskGroup(
         group_id="dbt_stations",
-        project_config=ProjectConfig(DBT_PROJECT_PATH),
+        project_config=project_config,
         profile_config=profile_config,
         execution_config=execution_config,
         render_config=RenderConfig(
