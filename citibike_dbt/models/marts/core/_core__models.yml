@@ -234,6 +234,10 @@ models:
               arguments:
                 to: ref('dim_stations')
                 field: station_id
+          - null_proportion:
+              arguments:
+                max_proportion: 0.005
+                group_by_column: _batch_month
 
       - name: end_station_id
         description: "Identifier of the station where the trip ended; null for e-bikes left outside a dock and for unreturned bikes. Ids that lost a trailing zero in the source are repaired (5785.1 -> 5785.10) when the two-decimal id exists in the data"
@@ -243,6 +247,10 @@ models:
               arguments:
                 to: ref('dim_stations')
                 field: station_id
+          - null_proportion:
+              arguments:
+                max_proportion: 0.02
+                group_by_column: _batch_month
 
       - name: rideable_type
         description: "Type of bike used: classic_bike or electric_bike"
@@ -257,8 +265,13 @@ models:
         data_type: float64
 
       - name: distance_km
-        description: "Straight-line distance between start and end points in kilometers; null when end coordinates are missing"
+        description: "Straight-line distance between start and end points in kilometers; null when start or end coordinates are missing"
         data_type: float64
+        data_tests:
+          - null_proportion:
+              arguments:
+                max_proportion: 0.02
+                group_by_column: _batch_month
 
       - name: has_end_station
         description: "True when the trip ended at a known station"
