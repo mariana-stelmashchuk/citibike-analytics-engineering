@@ -1,0 +1,29 @@
+unit_tests:
+  - name: test_int_trips_flags
+    description: >
+      Duration is computed from UTC timestamps; is_round_trip is false (not null) when
+      the end station is unknown; is_over_24h is true only above 1440 minutes.
+    model: int_trips__enriched
+    given:
+      - input: ref('int_trips__deduplicated')
+        rows:
+          - ride_id: "round_trip"
+            start_station_id: "5785.10"
+            end_station_id: "5785.10"
+            started_at: "2026-08-01 10:00:00"
+            ended_at: "2026-08-01 10:30:00"
+          - ride_id: "no_end_station"
+            start_station_id: "5785.10"
+            end_station_id: null
+            started_at: "2026-08-01 10:00:00"
+            ended_at: "2026-08-01 11:00:00"
+          - ride_id: "over_24h"
+            start_station_id: "5785.10"
+            end_station_id: "6429.01"
+            started_at: "2026-08-01 10:00:00"
+            ended_at: "2026-08-02 10:01:00"
+    expect:
+      rows:
+        - {ride_id: "round_trip", duration_minutes: 30.0, is_round_trip: true, has_end_station: true, is_over_24h: false}
+        - {ride_id: "no_end_station", duration_minutes: 60.0, is_round_trip: false, has_end_station: false, is_over_24h: false}
+        - {ride_id: "over_24h", duration_minutes: 1441.0, is_round_trip: false, has_end_station: true, is_over_24h: true}

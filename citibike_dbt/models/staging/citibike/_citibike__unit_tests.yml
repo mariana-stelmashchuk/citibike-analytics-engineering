@@ -1,0 +1,18 @@
+unit_tests:
+  - name: test_stg_trips_dst_adjustment
+    description: >
+      is_dst_adjusted is true only for trips that look negative because they crossed
+      the repeated hour at the end of DST (gap under one hour); a normal trip and a
+      trip with a larger negative gap (a real data error) are not adjusted.
+    model: stg_citibike__trips
+    given:
+      - input: source('citibike', 'trips')
+        rows:
+          - {ride_id: "normal_trip", started_at: "2025-11-01 10:00:00", ended_at: "2025-11-01 10:15:00"}
+          - {ride_id: "dst_crossing", started_at: "2025-11-02 01:50:00", ended_at: "2025-11-02 01:10:00"}
+          - {ride_id: "data_error", started_at: "2025-11-05 12:00:00", ended_at: "2025-11-05 10:00:00"}
+    expect:
+      rows:
+        - {ride_id: "normal_trip", is_dst_adjusted: false}
+        - {ride_id: "dst_crossing", is_dst_adjusted: true}
+        - {ride_id: "data_error", is_dst_adjusted: false}
