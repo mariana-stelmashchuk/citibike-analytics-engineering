@@ -1,0 +1,26 @@
+citibike_dbt:
+  target: ci
+  outputs:
+    # Temporary dataset for one pull request; dropped at the end of the CI run.
+    ci:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      project: citibike-analytics-510413
+      dataset: "dbt_ci_pr_{{ env_var('PR_NUMBER', 'local') }}"
+      location: EU
+      threads: 4
+      job_execution_timeout_seconds: 300
+      maximum_bytes_billed: 30000000000
+
+    # Used only to parse the main branch and point --defer at production tables.
+    prod:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      project: citibike-analytics-510413
+      dataset: dbt_prod
+      location: EU
+      threads: 4
+      job_execution_timeout_seconds: 300
+      maximum_bytes_billed: 30000000000

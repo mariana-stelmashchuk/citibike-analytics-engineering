@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  dbt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/.github/dbt_profiles
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Check out the pull request branch
+        uses: actions/checkout@v4
+
+      - name: Check out main for state comparison
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install "dbt-core==1.12.5" "dbt-bigquery==1.12.1" \
+            sqlfluff sqlfluff-templater-dbt
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CI_SA_KEY }}
+
+      - name: Build the production manifest from main
+        working-directory: main/citibike_dbt
+        run: |
+          dbt deps
+          dbt parse --target prod --target-path prod_state
+
+      - name: Install dbt packages
+        working-directory: citibike_dbt
+        run: dbt deps
+
+      - name: Lint SQL
+        working-directory: citibike_dbt
+        run: sqlfluff lint models
+
+      - name: Build modified models and their children
+        working-directory: citibike_dbt
+        run: |
+          dbt build \
+            --select state:modified+ \
+            --defer \
+            --state ../main/citibike_dbt/prod_state \
+            --target ci
+
+      - name: Drop the CI dataset
+        if: always()
+        working-directory: citibike_dbt
+        run: dbt run-operation drop_ci_schema --target ci
