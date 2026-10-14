@@ -1,9 +1,11 @@
+# Airflow runs from a separate clone of the repository that always tracks main
+# (~/projects/citibike-prod), so production never builds from a feature branch.
 services:
   scheduler:
     volumes:
-      - /Users/mrnstlm/projects/citibike-analytics-engineering/citibike_dbt:/usr/local/airflow/dbt/citibike_dbt
+      - /Users/mrnstlm/projects/citibike-prod/citibike_dbt:/usr/local/airflow/dbt/citibike_dbt
       - /Users/mrnstlm/.gcp:/usr/local/airflow/gcp:ro
   dag-processor:
     volumes:
-      - /Users/mrnstlm/projects/citibike-analytics-engineering/citibike_dbt:/usr/local/airflow/dbt/citibike_dbt
+      - /Users/mrnstlm/projects/citibike-prod/citibike_dbt:/usr/local/airflow/dbt/citibike_dbt
       - /Users/mrnstlm/.gcp:/usr/local/airflow/gcp:ro
