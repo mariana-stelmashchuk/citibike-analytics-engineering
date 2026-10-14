@@ -23,7 +23,7 @@ dst_adjusted as (
     select
         *,
         ended_at_utc < started_at_utc
-            and timestamp_diff(started_at_utc, ended_at_utc, second) < 3600 as is_dst_adjusted
+        and timestamp_diff(started_at_utc, ended_at_utc, second) < 3600 as is_dst_adjusted
     from converted
 
 ),

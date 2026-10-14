@@ -59,8 +59,9 @@ joined as (
 
     from departures
     full outer join arrivals
-        on departures.station_id = arrivals.station_id
-        and departures.date_day = arrivals.date_day
+        on
+            departures.station_id = arrivals.station_id
+            and departures.date_day = arrivals.date_day
 
 ),
 

@@ -6,3 +6,5 @@ dbt-core-experimental-parser==2.0.5
 dbt-extractor==0.6.0
 dbt-protos==1.0.565
 duckdb==1.5.6
+sqlfluff
+sqlfluff-templater-dbt

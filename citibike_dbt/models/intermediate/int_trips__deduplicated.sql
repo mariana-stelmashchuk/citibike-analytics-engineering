@@ -25,7 +25,7 @@ with trips as (
     {% if is_incremental() %}
     -- The latest stored batch is reprocessed together with any newer ones, so duplicates
     -- between it and the next file are resolved and both partitions are rewritten.
-    where _batch_month >= date '{{ max_batch_month }}'
+        where _batch_month >= date '{{ max_batch_month }}'
     {% endif %}
 
 ),
@@ -46,17 +46,17 @@ known_station_ids as (
     where regexp_contains(end_station_id, r'^\d+\.\d{2}$')
 
     {% if is_incremental() %}
-    union distinct
+        union distinct
 
-    select start_station_id as station_id
-    from {{ this }}
-    where regexp_contains(start_station_id, r'^\d+\.\d{2}$')
+        select start_station_id as station_id
+        from {{ this }}
+        where regexp_contains(start_station_id, r'^\d+\.\d{2}$')
 
-    union distinct
+        union distinct
 
-    select end_station_id as station_id
-    from {{ this }}
-    where regexp_contains(end_station_id, r'^\d+\.\d{2}$')
+        select end_station_id as station_id
+        from {{ this }}
+        where regexp_contains(end_station_id, r'^\d+\.\d{2}$')
     {% endif %}
 
 ),
@@ -80,15 +80,17 @@ final as (
         -- ids
         ride_id,
         case
-            when regexp_contains(start_station_id, r'^\d+\.\d$')
-                and concat(start_station_id, '0') in (select station_id from known_station_ids)
-            then concat(start_station_id, '0')
+            when
+                regexp_contains(start_station_id, r'^\d+\.\d$')
+                and concat(start_station_id, '0') in (select known_station_ids.station_id from known_station_ids)
+                then concat(start_station_id, '0')
             else start_station_id
         end as start_station_id,
         case
-            when regexp_contains(end_station_id, r'^\d+\.\d$')
-                and concat(end_station_id, '0') in (select station_id from known_station_ids)
-            then concat(end_station_id, '0')
+            when
+                regexp_contains(end_station_id, r'^\d+\.\d$')
+                and concat(end_station_id, '0') in (select known_station_ids.station_id from known_station_ids)
+                then concat(end_station_id, '0')
             else end_station_id
         end as end_station_id,
 

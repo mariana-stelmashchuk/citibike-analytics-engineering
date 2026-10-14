@@ -1,0 +1,38 @@
+[sqlfluff]
+dialect = bigquery
+templater = dbt
+max_line_length = 120
+# ST06 (simple columns before calculations) is disabled: columns in our models are
+# grouped by meaning (ids, attributes, flags, timestamps), and that order is part of
+# the public contracts.
+exclude_rules = ST06
+
+[sqlfluff:templater:dbt]
+project_dir = .
+
+[sqlfluff:indentation]
+indent_unit = space
+tab_space_size = 4
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.literals]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.types]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:aliasing.table]
+aliasing = explicit
+
+[sqlfluff:rules:aliasing.column]
+aliasing = explicit
+
+[sqlfluff:rules:references.keywords]
+# quarter and capacity are keywords in BigQuery, but they are valid and clear column
+# names, and both are part of public contracts (dim_date, dim_stations*).
+ignore_words = quarter,capacity
