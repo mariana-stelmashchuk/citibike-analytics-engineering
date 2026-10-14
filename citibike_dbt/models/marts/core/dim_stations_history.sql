@@ -28,7 +28,7 @@ gbfs_versions as (
         station_lng,
         case
             when row_number() over (partition by station_id order by dbt_valid_from) = 1
-            then timestamp('1900-01-01')
+                then timestamp('1900-01-01')
             else dbt_valid_from
         end as valid_from,
         dbt_valid_to as valid_to,
@@ -55,7 +55,7 @@ trip_only_versions as (
         false as is_in_gbfs
     from trip_stations
     where trip_stations.station_id not in (
-        select station_id
+        select snapshot_versions.station_id
         from snapshot_versions
     )
 

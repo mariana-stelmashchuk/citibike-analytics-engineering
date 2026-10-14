@@ -53,7 +53,7 @@ final as (
     from station_events
     qualify row_number() over (
         partition by station_id
-        order by event_at desc, station_name
+        order by event_at desc, station_name asc
     ) = 1
 
 )

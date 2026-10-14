@@ -53,5 +53,5 @@ select
 
 from {{ ref('int_trips__enriched') }}
 {% if is_incremental() %}
-where _batch_month >= date '{{ max_batch_month }}'
+    where _batch_month >= date '{{ max_batch_month }}'
 {% endif %}
