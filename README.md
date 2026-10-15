@@ -4,6 +4,8 @@ End-to-end analytics engineering project on public NYC Citi Bike data: ingestion
 Python and DuckDB, modeling in dbt on BigQuery, SCD Type 2 station history, orchestration
 with Airflow, and CI on every pull request.
 
+**Documentation:** [dbt docs with model descriptions and lineage](https://mariana-stelmashchuk.github.io/citibike-analytics-engineering/)
+
 The project covers 13 months of trips (Sep 2025 – Sep 2026, ~50.7M trips, ~2.6k stations)
 and is built to answer operational questions such as *which stations lose bikes and need
 rebalancing* and *how demand changes by season, hour and rider type*.
