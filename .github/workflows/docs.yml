@@ -1,0 +1,69 @@
+name: Publish dbt docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; a newer run replaces a pending one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/.github/dbt_profiles
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dbt
+        run: pip install "dbt-core==1.12.5" "dbt-bigquery==1.12.1"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CI_SA_KEY }}
+
+      - name: Generate docs against production
+        working-directory: citibike_dbt
+        run: |
+          dbt deps
+          dbt docs generate --target prod --static
+
+      - name: Prepare the site
+        run: |
+          mkdir site
+          cp citibike_dbt/target/static_index.html site/index.html
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
