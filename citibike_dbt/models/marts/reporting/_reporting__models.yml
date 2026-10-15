@@ -1,0 +1,143 @@
+version: 2
+
+models:
+  - name: rpt_trips_hourly
+    description: >
+      Dashboard-ready aggregate of trips: one row per local date, hour, rider type and
+      bike type. Measures are additive (counts and sums), so they can be re-aggregated to
+      any level; compute averages as sums divided by counts. Trips over 24 hours (mostly
+      unreturned bikes) are counted in trips_cnt but excluded from the duration sum.
+    config:
+      contract:
+        enforced: true
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - date_day
+              - hour_of_day
+              - rider_type
+              - rideable_type
+
+    columns:
+      - name: date_day
+        description: "Trip start date in New York local time"
+        data_type: date
+        constraints:
+          - type: not_null
+
+      - name: hour_of_day
+        description: "Hour of trip start in New York local time (0-23)"
+        data_type: int64
+
+      - name: rider_type
+        description: "member (subscriber) or casual"
+        data_type: string
+
+      - name: rideable_type
+        description: "classic_bike or electric_bike"
+        data_type: string
+
+      - name: month_start_date
+        description: "First day of the month of date_day"
+        data_type: date
+
+      - name: day_name
+        description: "Full day name, e.g. Monday"
+        data_type: string
+
+      - name: day_of_week
+        description: "Day of week in BigQuery convention: 1 = Sunday, 7 = Saturday; use to sort day_name"
+        data_type: int64
+
+      - name: is_weekend
+        description: "True for Saturday and Sunday"
+        data_type: boolean
+
+      - name: trips_cnt
+        description: "Number of trips, including trips over 24 hours"
+        data_type: int64
+
+      - name: trips_under_24h_cnt
+        description: "Number of trips that lasted 24 hours or less; denominator for average duration"
+        data_type: int64
+
+      - name: duration_minutes_under_24h_sum
+        description: "Total duration in minutes of trips that lasted 24 hours or less"
+        data_type: float64
+
+      - name: round_trips_cnt
+        description: "Number of trips that started and ended at the same station"
+        data_type: int64
+
+  - name: rpt_station_daily
+    description: >
+      Dashboard-ready daily station activity: fct_station_daily joined with the current
+      station attributes and calendar. One row per station per local day with at least one
+      departure or arrival. Used for rebalancing analysis and the station map.
+    config:
+      contract:
+        enforced: true
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - station_id
+              - date_day
+
+    columns:
+      - name: station_id
+        description: "Station id used in trips"
+        data_type: string
+        constraints:
+          - type: not_null
+
+      - name: date_day
+        description: "Calendar date in New York local time"
+        data_type: date
+        constraints:
+          - type: not_null
+
+      - name: station_name
+        description: "Current station name"
+        data_type: string
+
+      - name: region_id
+        description: "GBFS region id; null for stations not in GBFS"
+        data_type: string
+
+      - name: capacity
+        description: "Current number of docks; 0 means the station is currently removed; null for stations not in GBFS"
+        data_type: int64
+
+      - name: station_location
+        description: "Station coordinates as 'latitude,longitude', recognized by Looker Studio as a geo field"
+        data_type: string
+
+      - name: month_start_date
+        description: "First day of the month of date_day"
+        data_type: date
+
+      - name: is_weekend
+        description: "True for Saturday and Sunday"
+        data_type: boolean
+
+      - name: departures_cnt
+        description: "Number of trips that started at the station on this day"
+        data_type: int64
+
+      - name: arrivals_cnt
+        description: "Number of trips that ended at the station on this day"
+        data_type: int64
+
+      - name: net_flow
+        description: "arrivals_cnt minus departures_cnt; negative means the station lost bikes"
+        data_type: int64
+
+      - name: electric_departures_cnt
+        description: "Number of e-bike trips that started at the station on this day"
+        data_type: int64
+
+      - name: electric_arrivals_cnt
+        description: "Number of e-bike trips that ended at the station on this day"
+        data_type: int64
