@@ -54,9 +54,12 @@ trip_only_versions as (
         timestamp('9999-12-31') as valid_to,
         false as is_in_gbfs
     from trip_stations
-    where trip_stations.station_id not in (
-        select snapshot_versions.station_id
+    -- not exists instead of not in: a single null station_id in the snapshot would make
+    -- not in return no rows and silently drop every trip-only station.
+    where not exists (
+        select 1
         from snapshot_versions
+        where snapshot_versions.station_id = trip_stations.station_id
     )
 
 ),
