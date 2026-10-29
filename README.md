@@ -6,23 +6,21 @@ with Airflow, and CI on every pull request.
 
 **Documentation:** [dbt docs with model descriptions and lineage](https://mariana-stelmashchuk.github.io/citibike-analytics-engineering/)
 
-The project covers 13 months of trips (Sep 2025 – Sep 2026, ~50.7M trips, ~2.6k stations)
-and is built to answer operational questions such as *which stations lose bikes and need
-rebalancing* and *how demand changes by season, hour and rider type*.
+The project uses trips from September 2025 onwards; each new month is loaded automatically
+as soon as Citi Bike publishes it (about 5 million trips per month). It is built to answer
+operational questions such as *which stations lose bikes and need rebalancing* and *how
+demand changes by season, hour and rider type*.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[Monthly trip files<br/>s3 tripdata] -->|Python + DuckDB| R[(raw_citibike.trips)]
-    B[GBFS station feed<br/>daily snapshot] -->|Python| S[(raw_citibike.station_information)]
-    R --> STG[staging]
-    S --> STG
-    STG --> INT[intermediate]
-    STG --> SNP[snp_stations<br/>SCD2 snapshot]
-    INT --> M[marts]
-    SNP --> M
-```
+1. **Ingestion.** Python with DuckDB loads the monthly trip files and a daily snapshot of
+   the GBFS station feed into `raw_citibike` in BigQuery.
+2. **Transformation.** dbt builds staging → intermediate → marts, plus an SCD Type 2
+   snapshot of stations, and small reporting tables for dashboards.
+3. **Orchestration.** Airflow runs loads and dbt on a schedule; a separate DAG deploys code
+   changes to production.
+4. **CI.** Every pull request is linted, and its changed models are built and tested in an
+   isolated dataset.
 
 | Layer | Tools |
 |---|---|
@@ -102,15 +100,22 @@ added from trip data.
 
 ## Orchestration
 
-Two Airflow DAGs; every dbt model runs as its own task through Cosmos, with its tests
-right after it.
+Three Airflow DAGs. The two scheduled ones react to new data; the deploy DAG reacts to
+new code.
 
 - **`citibike_stations_daily`** (06:00 UTC): load today's GBFS snapshot → dbt snapshot →
-  station models.
+  station models. Every dbt model runs as its own task through Cosmos, with its tests
+  right after it.
 - **`citibike_trips`** (07:00 UTC): find the next month to load from what is already in
   BigQuery → check whether the file is published → if yes, load it and build the whole
   project; if not, skip and check again tomorrow. Missed months are caught up
   automatically, one per run.
+- **`citibike_deploy`** (manual, after a merge to `main`): builds only the models whose
+  code changed since the last deployment, with everything downstream
+  (`state:modified+` against the manifest of the previous successful deployment), then
+  saves the new manifest. An optional `full_refresh` parameter rebuilds changed
+  incremental models from scratch when their logic or columns changed. In a setup with
+  Airflow on a server, CI would trigger this DAG automatically after each merge.
 
 All loads are idempotent: rerunning a task replaces the same partition.
 
@@ -120,7 +125,7 @@ All loads are idempotent: rerunning a task replaces the same partition.
 |---|---|---|
 | dev | `dbt_dev` | developer, locally |
 | ci | `dbt_ci_pr_<number>` (dropped after each run) | GitHub Actions |
-| prod | `dbt_prod` | Airflow, from `main` only |
+| prod | `dbt_prod` | Airflow, from a clone of `main`: scheduled DAGs for new data, `citibike_deploy` for new code |
 
 Every pull request to `main` runs SQLFluff and **Slim CI**: `dbt build --select
 state:modified+ --defer`, comparing against a manifest of `main`, so only changed models

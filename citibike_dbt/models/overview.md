@@ -2,8 +2,8 @@
 
 # Citi Bike Analytics Engineering
 
-dbt project on public NYC Citi Bike data in BigQuery: 13 months of trips
-(Sep 2025 – Sep 2026, ~50.7M trips) and daily snapshots of the official station list.
+dbt project on public NYC Citi Bike data in BigQuery: trips from September 2025 onwards,
+loaded monthly as Citi Bike publishes them, and daily snapshots of the official station list.
 
 ## Where to start
 
