@@ -149,7 +149,6 @@ Editor and Job User roles.
 ```
 citibike_dbt/        dbt project (models, snapshots, tests, macros)
 airflow/             Astro project: DAGs, Python loaders, dbt profile for prod
-scripts/             original bash loaders used before Airflow
 .github/             CI workflow and dbt profile for CI
 ```
 
