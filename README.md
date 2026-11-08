@@ -47,8 +47,12 @@ demand changes by season, hour and rider type*.
 | **`dim_stations`** | mart | table | station (current state) |
 | **`dim_stations_history`** | mart | table | station version (SCD2) |
 | **`dim_date`** | mart | table | calendar day |
+| `rpt_trips_hourly` | reporting | table | local date × hour × rider type × bike type |
+| `rpt_station_daily` | reporting | table | station × local day, with station attributes |
 
-Marts are the public layer: all five have enforced model contracts.
+Marts and reporting models are the public layer: all seven have enforced model contracts.
+Reporting models are small, additive aggregates for dashboards: they store counts and sums,
+so averages and shares are computed correctly at any level of aggregation.
 
 ## Key decisions
 
@@ -96,6 +100,7 @@ added from trip data.
 | Model contracts | Column names and types of all marts; `not_null` constraints on keys enforced by BigQuery |
 | Data tests | Uniqueness, not-null, accepted values, relationships, SCD2 ranges do not overlap (`mutually_exclusive_ranges`) |
 | Custom generic test | `null_proportion`: share of nulls per source batch stays under a threshold set from observed data (one bad month cannot hide among good ones) |
+| Reconciliation tests | Reporting aggregates contain exactly the same number of trips and station-days as the fact tables |
 | Source freshness | Trips: warn after 45 days, error after 75; stations: warn after 2 days, error after 4 |
 
 ## Orchestration
@@ -143,6 +148,11 @@ Editor and Job User roles.
 - Station history starts at the first GBFS snapshot; earlier attribute changes are not known.
 - Trips within the repeated DST hour that do not produce a negative duration cannot be
   detected and may be off by up to one hour.
+- There is no monitoring or alerting: when Airflow is not running, nothing reports missed
+  runs. Source freshness checks are defined in dbt but are not scheduled; in production
+  they would run on a schedule and alert on stale data.
+- CI checks dbt models but not the Python code: DAG import tests and a Python linter would
+  be the next additions.
 
 ## Repository structure
 
@@ -155,6 +165,10 @@ airflow/             Astro project: DAGs, Python loaders, dbt profile for prod
 ## Running locally
 
 Requirements: Python 3.12, a Google Cloud project with BigQuery, Docker and the Astro CLI.
+
+
+dbt expects a profile named `citibike_dbt` in `~/.dbt/profiles.yml` with a `dev` target
+pointing to your BigQuery project and a `dbt_dev` dataset.
 
 ```bash
 python -m venv .venv
